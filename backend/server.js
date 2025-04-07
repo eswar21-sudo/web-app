@@ -1,21 +1,34 @@
 const express = require('express');
-const mongoose = require('mongoose');
+const mysql = require('mysql2'); // Use mysql2 package for MySQL connection
+
 const app = express();
 
-// Connect to MongoDB (use a placeholder for now)
-mongoose.connect('mongodb://mongo-service:27017/mydb', { useNewUrlParser: true, useUnifiedTopology: true });
-
-// Define a simple schema
-const DataSchema = new mongoose.Schema({
-  message: String,
+// Set up MySQL connection
+const db = mysql.createConnection({
+  host: 'your-rds-endpoint', // Replace with your RDS endpoint
+  user: 'your-db-username',  // Replace with your RDS username
+  password: 'your-db-password',  // Replace with your RDS password
+  database: 'your-database-name' // Replace with your database name
 });
 
-const Data = mongoose.model('Data', DataSchema);
+// Test the database connection
+db.connect((err) => {
+  if (err) {
+    console.error('Error connecting to MySQL database:', err);
+    return;
+  }
+  console.log('Connected to MySQL database');
+});
 
-// Example route
-app.get('/api/data', async (req, res) => {
-  const data = await Data.findOne();  // Assuming data exists
-  res.json(data);
+// Example route to get data from MySQL
+app.get('/api/data', (req, res) => {
+  db.query('SELECT message FROM data LIMIT 1', (err, results) => {
+    if (err) {
+      console.error('Error fetching data:', err);
+      return res.status(500).send('Error fetching data');
+    }
+    res.json(results[0]);
+  });
 });
 
 // Start the server
